@@ -344,6 +344,7 @@ metadata:
   name: frontend-internal
   annotations:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: "onepane-eas-u-akslb-snet"
 spec:
   type: LoadBalancer
   selector:
