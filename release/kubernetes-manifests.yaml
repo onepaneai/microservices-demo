@@ -70,8 +70,8 @@ spec:
             cpu: 100m
             memory: 64Mi
           limits:
-            cpu: 200m
-            memory: 128Mi
+            cpu: 100m
+            memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -151,8 +151,8 @@ spec:
               cpu: 100m
               memory: 64Mi
             limits:
-              cpu: 200m
-              memory: 128Mi
+              cpu: 100m
+              memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -223,8 +223,8 @@ spec:
             cpu: 100m
             memory: 220Mi
           limits:
-            cpu: 200m
-            memory: 450Mi
+            cpu: 100m
+            memory: 220Mi
 ---
 apiVersion: v1
 kind: Service
@@ -322,8 +322,8 @@ spec:
               cpu: 100m
               memory: 64Mi
             limits:
-              cpu: 200m
-              memory: 128Mi
+              cpu: 100m
+              memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -406,8 +406,8 @@ spec:
             cpu: 100m
             memory: 64Mi
           limits:
-            cpu: 200m
-            memory: 128Mi
+            cpu: 100m
+            memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -476,8 +476,8 @@ spec:
             cpu: 100m
             memory: 64Mi
           limits:
-            cpu: 200m
-            memory: 128Mi
+            cpu: 100m
+            memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -529,11 +529,11 @@ spec:
           value: "redis-cart:6379"
         resources:
           requests:
-            cpu: 200m
+            cpu: 150m
             memory: 64Mi
           limits:
-            cpu: 300m
-            memory: 128Mi
+            cpu: 150m
+            memory: 64Mi
         readinessProbe:
           initialDelaySeconds: 15
           exec:
@@ -614,11 +614,11 @@ spec:
           value: "10"
         resources:
           requests:
-            cpu: 300m
+            cpu: 200m
             memory: 256Mi
           limits:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 200m
+            memory: 256Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -673,8 +673,8 @@ spec:
             cpu: 100m
             memory: 64Mi
           limits:
-            cpu: 200m
-            memory: 128Mi
+            cpu: 100m
+            memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -743,8 +743,8 @@ spec:
             cpu: 100m
             memory: 64Mi
           limits:
-            cpu: 200m
-            memory: 128Mi
+            cpu: 100m
+            memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -802,8 +802,8 @@ spec:
           name: redis-data
         resources:
           limits:
-            memory: 256Mi
-            cpu: 125m
+            memory: 200Mi
+            cpu: 70m
           requests:
             cpu: 70m
             memory: 200Mi
@@ -867,11 +867,11 @@ spec:
         #   value: "jaeger-collector:14268"
         resources:
           requests:
-            cpu: 200m
+            cpu: 150m
             memory: 180Mi
           limits:
-            cpu: 300m
-            memory: 300Mi
+            cpu: 200m
+            memory: 180Mi
         readinessProbe:
           initialDelaySeconds: 20
           periodSeconds: 15
