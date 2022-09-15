@@ -46,6 +46,7 @@ NEW_RELIC_LICENSE_KEY=bc78b543a28d34f6fdbbd5790c73328d3b80NRAL \
 NEW_RELIC_APP_NAME=cartservice
 
 
+
 COPY --from=builder /cartservice .
 ENV ASPNETCORE_URLS http://*:7070
 ENV DOTNET_EnableDiagnostics=0
