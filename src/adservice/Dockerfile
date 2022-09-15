@@ -20,6 +20,8 @@ COPY ["build.gradle", "gradlew", "./"]
 COPY gradle gradle
 RUN chmod +x gradlew
 RUN ./gradlew downloadRepos
+RUN ./gradlew downloadNewrelic
+RUN ./gradlew unzipNewrelic
 
 COPY . .
 RUN chmod +x gradlew
