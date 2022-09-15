@@ -25,7 +25,27 @@ FROM mcr.microsoft.com/dotnet/runtime-deps:7.0.0-preview.7-alpine3.16-amd64
 RUN GRPC_HEALTH_PROBE_VERSION=v0.4.12 && \
     wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
     chmod +x /bin/grpc_health_probe
+
 WORKDIR /app
+
+
+# Install the agent
+RUN apt-get update && apt-get install -y wget ca-certificates gnupg \
+&& echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list \
+&& wget https://download.newrelic.com/548C16BF.gpg \
+&& apt-key add 548C16BF.gpg \
+&& apt-get update \
+&& apt-get install -y newrelic-dotnet-agent
+
+# Enable the agent
+ENV CORECLR_ENABLE_PROFILING=1 \
+CORECLR_PROFILER={36032161-FFC0-4B61-B559-F6C5D41BAE5A} \
+CORECLR_NEWRELIC_HOME=/usr/local/newrelic-dotnet-agent \
+CORECLR_PROFILER_PATH=/usr/local/newrelic-dotnet-agent/libNewRelicProfiler.so \
+NEW_RELIC_LICENSE_KEY=bc78b543a28d34f6fdbbd5790c73328d3b80NRAL \
+NEW_RELIC_APP_NAME=cartservice
+
+
 COPY --from=builder /cartservice .
 ENV ASPNETCORE_URLS http://*:7070
 ENV DOTNET_EnableDiagnostics=0
