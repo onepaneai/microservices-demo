@@ -3,6 +3,8 @@ plugins {
     id 'com.github.sherter.google-java-format' version '0.9'
     id 'idea'
     id 'application'
+    id "de.undercouch.download" version "5.0.0"
+    
 }
 
 repositories {
@@ -116,11 +118,25 @@ task adServiceClient(type: CreateStartScripts) {
     classpath = startScripts.classpath
     defaultJvmOpts =
             ["-Dlog4j2.contextDataInjector=io.opencensus.contrib.logcorrelation.log4j2.OpenCensusTraceContextDataInjector",
-             "-agentpath:/opt/cprof/profiler_java_agent.so=-cprof_service=adserviceclient,-cprof_service_version=1.0.0"]
+             "-agentpath:/app/newrelic.jar "]
 }
 
 applicationDistribution.into('bin') {
     from(adService)
     from(adServiceClient)
     fileMode = 0755
+}
+
+task downloadNewrelic(type: Download) {
+    acceptAnyCertificate true
+    compress true
+    mkdir 'newrelic'
+    src 'https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-java.zip'
+    dest file('newrelic')
+}
+    
+
+task unzipNewrelic(type: Copy) {
+    from zipTree(file('newrelic/newrelic-java.zip'))
+    into rootDir
 }
