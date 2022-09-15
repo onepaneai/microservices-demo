@@ -29,6 +29,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.1.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/newrelic/go-agent/v3 v3.18.2 // indirect
 	github.com/prometheus/prometheus v2.5.0+incompatible // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	golang.org/x/oauth2 v0.0.0-20220622183110-fd043fe589d2 // indirect
