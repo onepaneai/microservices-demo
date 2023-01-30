@@ -36,7 +36,16 @@ if(process.env.DISABLE_APPINSIGHTS) {
 }
 else {
   console.log("APPINSIGHTS enabled.")
-  require("applicationinsights").setup().start();
+  require("applicationinsights").setup()
+  .setAutoDependencyCorrelation(true)
+  .setAutoCollectRequests(true)
+  .setAutoCollectPerformance(true, true)
+  .setAutoCollectExceptions(true)
+  .setAutoCollectDependencies(true)
+  .setAutoCollectConsole(true)
+  .setUseDiskRetryCaching(true)
+  .setSendLiveMetrics(false)
+  .setDistributedTracingMode(appInsights.DistributedTracingModes.AI).start();
 }
 
 if(process.env.DISABLE_TRACING) {
