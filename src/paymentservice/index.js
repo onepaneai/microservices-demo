@@ -31,6 +31,23 @@ else {
 }
 
 
+if(process.env.DISABLE_APPINSIGHTS) {
+  console.log("Profiler disabled.")
+}
+else {
+  console.log("APPINSIGHTS enabled.")
+  require("applicationinsights").setup()
+  .setAutoDependencyCorrelation(true)
+  .setAutoCollectRequests(true)
+  .setAutoCollectPerformance(true, true)
+  .setAutoCollectExceptions(true)
+  .setAutoCollectDependencies(true)
+  .setAutoCollectConsole(true)
+  .setUseDiskRetryCaching(true)
+  .setSendLiveMetrics(false)
+  .setDistributedTracingMode(appInsights.DistributedTracingModes.AI).start();
+}
+
 if(process.env.DISABLE_TRACING) {
   console.log("Tracing disabled.")
 }
@@ -56,8 +73,9 @@ else {
 
 const path = require('path');
 const HipsterShopServer = require('./server');
+let appInsights = require('applicationinsights');
 
-const PORT = process.env['PORT'];
+const PORT = 9888;
 const PROTO_PATH = path.join(__dirname, '/proto/');
 
 const server = new HipsterShopServer(PROTO_PATH, PORT);
