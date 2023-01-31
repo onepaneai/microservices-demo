@@ -33,7 +33,7 @@ from grpc_health.v1 import health_pb2_grpc
 
 from opencensus.ext.stackdriver import trace_exporter as stackdriver_exporter
 from opencensus.ext.grpc import server_interceptor
-from azure.monitor.opentelemetry.exporter import (AzureMonitorTraceExporter)
+from azure.monitor.opentelemetry.exporter import (AzureMonitorTraceExporter,ApplicationInsightsSampler)
 from opencensus.common.transports.async_ import AsyncTransport
 from opencensus.trace import samplers
 
@@ -205,7 +205,8 @@ if __name__ == '__main__':
       resource = Resource(attributes={
           "service.name": "emailservice"
       })
-      trace.set_tracer_provider(TracerProvider(resource=resource))
+      sampler = ApplicationInsightsSampler(0.1)
+      trace.set_tracer_provider(TracerProvider(resource=resource, sampler=sampler))
       trace.get_tracer_provider().add_span_processor(
           SimpleSpanProcessor(exporter)
       )

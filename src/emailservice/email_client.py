@@ -42,7 +42,8 @@ try:
     resource = Resource(attributes={
       "service.name": "emailservice"
     })
-    trace.set_tracer_provider(TracerProvider(resource=resource))
+    sampler = ApplicationInsightsSampler(0.1)
+    trace.set_tracer_provider(TracerProvider(resource=resource, sampler=sampler))
     trace.get_tracer_provider().add_span_processor(
         SimpleSpanProcessor(exporter)
     )
