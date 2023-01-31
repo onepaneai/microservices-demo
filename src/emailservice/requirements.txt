@@ -116,3 +116,7 @@ uritemplate==4.1.1
     # via google-api-python-client
 urllib3==1.26.12
     # via requests
+opentelemetry-sdk==1.14.0
+opentelemetry-api==1.14.0
+opentelemetry-instrumentation-grpc
+azure-monitor-opentelemetry-exporter

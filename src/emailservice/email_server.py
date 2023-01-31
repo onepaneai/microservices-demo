@@ -21,6 +21,7 @@ import sys
 import time
 import grpc
 import traceback
+from opentelemetry.sdk.resources import Resource
 from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateError
 from google.api_core.exceptions import GoogleAPICallError
 from google.auth.exceptions import DefaultCredentialsError
@@ -32,8 +33,19 @@ from grpc_health.v1 import health_pb2_grpc
 
 from opencensus.ext.stackdriver import trace_exporter as stackdriver_exporter
 from opencensus.ext.grpc import server_interceptor
+from azure.monitor.opentelemetry.exporter import (AzureMonitorTraceExporter)
 from opencensus.common.transports.async_ import AsyncTransport
 from opencensus.trace import samplers
+
+
+
+from opentelemetry import trace
+from opentelemetry.instrumentation.grpc import GrpcInstrumentorServer
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (
+    ConsoleSpanExporter,
+    SimpleSpanProcessor,
+)
 
 # import googleclouddebugger
 import googlecloudprofiler
@@ -123,8 +135,7 @@ class HealthCheck():
       status=health_pb2.HealthCheckResponse.SERVING)
 
 def start(dummy_mode):
-  server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
-                       interceptors=(tracer_interceptor,))
+  server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),)
   service = None
   if dummy_mode:
     service = DummyEmailService()
@@ -174,14 +185,14 @@ if __name__ == '__main__':
   logger.info('starting the email service in dummy mode.')
 
   # Profiler
-  try:
-    if "DISABLE_PROFILER" in os.environ:
-      raise KeyError()
-    else:
-      logger.info("Profiler enabled.")
-      initStackdriverProfiling()
-  except KeyError:
-      logger.info("Profiler disabled.")
+  # try:
+  #   if "DISABLE_PROFILER" in os.environ:
+  #     raise KeyError()
+  #   else:
+  #     logger.info("Profiler enabled.")
+  #     initStackdriverProfiling()
+  # except KeyError:
+  #     logger.info("Profiler disabled.")
 
   # Tracing
   try:
@@ -189,16 +200,22 @@ if __name__ == '__main__':
       raise KeyError()
     else:
       logger.info("Tracing enabled.")
-      sampler = samplers.AlwaysOnSampler()
-      exporter = stackdriver_exporter.StackdriverExporter(
-        project_id=os.environ.get('GCP_PROJECT_ID'),
-        transport=AsyncTransport)
-      tracer_interceptor = server_interceptor.OpenCensusServerInterceptor(sampler, exporter)
+      exporter = AzureMonitorTraceExporter(connection_string="InstrumentationKey=b6a44f93-ffc9-442d-abda-0d2967019fb7;IngestionEndpoint=https://eastus2-3.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus2.livediagnostics.monitor.azure.com/")
+
+      resource = Resource(attributes={
+          "service.name": "emailservice"
+      })
+      trace.set_tracer_provider(TracerProvider(resource=resource))
+      trace.get_tracer_provider().add_span_processor(
+          SimpleSpanProcessor(exporter)
+      )
+
+      grpc_server_instrumentor = GrpcInstrumentorServer()
+      grpc_server_instrumentor.instrument()
+        
   except (KeyError, DefaultCredentialsError):
       logger.info("Tracing disabled.")
-      tracer_interceptor = server_interceptor.OpenCensusServerInterceptor()
   except Exception as e:
       logger.warn(f"Exception on Cloud Trace setup: {traceback.format_exc()}, tracing disabled.") 
-      tracer_interceptor = server_interceptor.OpenCensusServerInterceptor()
-  
+      
   start(dummy_mode = True)
