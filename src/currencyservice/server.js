@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 if(process.env.DISABLE_PROFILER) {
   console.log("Profiler disabled.")
 }
@@ -92,6 +93,30 @@ function _loadProto (path) {
  */
 function _getCurrencyData (callback) {
   const data = require('./data/currency_conversion.json');
+  const https = require('https');
+  const http = require('http');
+  const req = http.request("http://api.frankfurter.app/latest")
+  req.on('error', function(err) {
+    console.log("currency", err)
+  });
+  req.end()
+
+  api_urls = [
+    "https://httpstat.us/200",
+    "https://httpstat.us/404",
+    "https://httpstat.us/401",
+    "https://httpstat.us/202",
+    "https://httpstat.us/500",
+    "https://httpstat.us/503",
+   ]
+   
+  let rndInt = Math.ceil( Math.random() * (5 - 0) + 0);
+  console.log(api_urls[rndInt])
+  const randmrequest = https.request(api_urls[rndInt])
+  randmrequest.on('error', function(err) {
+    console.log("randmrequest", err)
+  });
+  randmrequest.end()
   callback(data);
 }
 
@@ -168,7 +193,7 @@ function main () {
   const server = new grpc.Server();
   server.addService(shopProto.CurrencyService.service, {getSupportedCurrencies, convert});
   server.addService(healthProto.Health.service, {check});
-
+  
   server.bindAsync(
     `0.0.0.0:${PORT}`,
     grpc.ServerCredentials.createInsecure(),

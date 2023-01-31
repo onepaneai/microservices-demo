@@ -44,6 +44,8 @@ COPY --from=builder /bin/grpc_health_probe /bin/grpc_health_probe
 
 # Add the application
 COPY . .
+RUN pip install newrelic
 
 EXPOSE 8080
-ENTRYPOINT [ "python", "email_server.py" ]
+ENV NEW_RELIC_CONFIG_FILE=newrelic.ini
+ENTRYPOINT ["newrelic-admin", "run-program", "python", "email_server.py"]

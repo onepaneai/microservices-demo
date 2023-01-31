@@ -16,6 +16,8 @@
 
 import random
 from locust import HttpUser, TaskSet, between
+import requests
+
 
 products = [
     '0PUK6V6EV0',
@@ -30,6 +32,18 @@ products = [
 
 def index(l):
     l.client.get("/")
+
+
+def randomExternalAPICall(l):
+   api_urls = [
+    "https://httpstat.us/200",
+    "https://httpstat.us/404",
+    "https://httpstat.us/401",
+    "https://httpstat.us/202",
+    "https://httpstat.us/500",
+    "https://httpstat.us/503",
+   ]
+   requests.get(random.choice(api_urls))
 
 def setCurrency(l):
     currencies = ['EUR', 'USD', 'JPY', 'CAD']
@@ -74,7 +88,8 @@ class UserBehavior(TaskSet):
         browseProduct: 10,
         addToCart: 2,
         viewCart: 3,
-        checkout: 1}
+        checkout: 1,
+        randomExternalAPICall:3}
 
 class WebsiteUser(HttpUser):
     tasks = [UserBehavior]
