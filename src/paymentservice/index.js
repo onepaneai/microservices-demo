@@ -36,7 +36,9 @@ if(process.env.DISABLE_APPINSIGHTS) {
 }
 else {
   console.log("APPINSIGHTS enabled.")
-  require("applicationinsights").setup()
+  let appInsights = require("applicationinsights")
+  
+  appInsights.setup()
   .setAutoDependencyCorrelation(true)
   .setAutoCollectRequests(true)
   .setAutoCollectPerformance(true, true)
@@ -75,7 +77,7 @@ const path = require('path');
 const HipsterShopServer = require('./server');
 let appInsights = require('applicationinsights');
 
-const PORT = 9888;
+const PORT = process.env.PORT;
 const PROTO_PATH = path.join(__dirname, '/proto/');
 
 const server = new HipsterShopServer(PROTO_PATH, PORT);
