@@ -43,10 +43,12 @@ COPY --from=builder /bin/grpc_health_probe /bin/grpc_health_probe
 
 # Add the application
 COPY . .
-RUN pip install newrelic
+# RUN pip install newrelic
 
 # set listen port
 ENV PORT "8080"
 EXPOSE 8080
-ENV NEW_RELIC_CONFIG_FILE=newrelic.ini
-ENTRYPOINT ["newrelic-admin", "run-program", "python", "recommendation_server.py"]
+# ENV NEW_RELIC_CONFIG_FILE=newrelic.ini
+# ENTRYPOINT ["newrelic-admin", "run-program", "python", "recommendation_server.py"]
+
+ENTRYPOINT ["python", "recommendation_server.py"]

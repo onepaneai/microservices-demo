@@ -20,8 +20,17 @@ import demo_pb2
 import demo_pb2_grpc
 
 from opencensus.trace.tracer import Tracer
-from opencensus.trace.exporters import stackdriver_exporter
-from opencensus.trace.ext.grpc import client_interceptor
+
+import os
+from opentelemetry import trace
+from opentelemetry.instrumentation.grpc import GrpcInstrumentorClient
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace.export import (
+    SimpleSpanProcessor,
+)
+from azure.monitor.opentelemetry.exporter import (AzureMonitorTraceExporter, ApplicationInsightsSampler)
+
 
 from logger import getJSONLogger
 logger = getJSONLogger('recommendationservice-server')
@@ -34,15 +43,26 @@ if __name__ == "__main__":
         port = "8080"
 
     try:
-        exporter = stackdriver_exporter.StackdriverExporter()
-        tracer = Tracer(exporter=exporter)
-        tracer_interceptor = client_interceptor.OpenCensusClientInterceptor(tracer, host_port='localhost:'+port)
-    except:
-        tracer_interceptor = client_interceptor.OpenCensusClientInterceptor()
+  
+  
+        exporter = AzureMonitorTraceExporter(connection_string=os.environ.get('APPINSIGHT_CONNECTION_STRING', ''))
+        resource = Resource(attributes={
+            "service.name": "recommendationservice"
+        })
+        sampler = ApplicationInsightsSampler(0.1)
+        trace.set_tracer_provider(TracerProvider(resource=resource, sampler=sampler))
+        trace.get_tracer_provider().add_span_processor(
+            SimpleSpanProcessor(exporter)
+        )
 
+        grpc_client_instrumentor = GrpcInstrumentorClient()
+        grpc_client_instrumentor.instrument()
+    except Exception as e:
+        logger.warning(e)
     # set up server stub
+    
     channel = grpc.insecure_channel('localhost:'+port)
-    channel = grpc.intercept_channel(channel, tracer_interceptor)
+    # channel = grpc.intercept_channel(channel, tracer_interceptor)
     stub = demo_pb2_grpc.RecommendationServiceStub(channel)
     # form request
     request = demo_pb2.ListRecommendationsRequest(user_id="test", product_ids=["test"])

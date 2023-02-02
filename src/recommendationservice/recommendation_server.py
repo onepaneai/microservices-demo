@@ -20,7 +20,6 @@ import time
 import traceback
 from concurrent import futures
 
-import googleclouddebugger
 import googlecloudprofiler
 from google.auth.exceptions import DefaultCredentialsError
 import grpc
@@ -33,6 +32,17 @@ import demo_pb2
 import demo_pb2_grpc
 from grpc_health.v1 import health_pb2
 from grpc_health.v1 import health_pb2_grpc
+
+from opentelemetry.sdk.resources import Resource
+from azure.monitor.opentelemetry.exporter import (AzureMonitorTraceExporter,ApplicationInsightsSampler)
+from opentelemetry import trace
+from opentelemetry.instrumentation.grpc import GrpcInstrumentorServer
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (
+    ConsoleSpanExporter,
+    SimpleSpanProcessor,
+)
+
 
 from logger import getJSONLogger
 logger = getJSONLogger('recommendationservice-server')
@@ -94,45 +104,30 @@ if __name__ == "__main__":
     logger.info("initializing recommendationservice")
 
     try:
-      if "DISABLE_PROFILER" in os.environ:
-        raise KeyError()
-      else:
-        logger.info("Profiler enabled.")
-        initStackdriverProfiling()
-    except KeyError:
-        logger.info("Profiler disabled.")
-
-    try:
       if "DISABLE_TRACING" in os.environ:
         raise KeyError()
       else:
         logger.info("Tracing enabled.")
-        sampler = samplers.AlwaysOnSampler()
-        exporter = stackdriver_exporter.StackdriverExporter(
-          project_id=os.environ.get('GCP_PROJECT_ID'),
-          transport=AsyncTransport)
-        tracer_interceptor = server_interceptor.OpenCensusServerInterceptor(sampler, exporter)
-    except (KeyError, DefaultCredentialsError):
-        logger.info("Tracing disabled.")
-        tracer_interceptor = server_interceptor.OpenCensusServerInterceptor()
+        exporter = AzureMonitorTraceExporter(connection_string=os.environ.get('APPINSIGHT_CONNECTION_STRING', ''))
+        resource = Resource(attributes={
+          "service.name": "recommendationservice"
+        })
+        sampler = ApplicationInsightsSampler(0.1)
+        trace.set_tracer_provider(TracerProvider(resource=resource, sampler=sampler))
+        trace.get_tracer_provider().add_span_processor(
+            SimpleSpanProcessor(exporter)
+        )
+
+        grpc_server_instrumentor = GrpcInstrumentorServer()
+        grpc_server_instrumentor.instrument()
     except Exception as e:
         logger.warn(f"Exception on Cloud Trace setup: {traceback.format_exc()}, tracing disabled.") 
-        tracer_interceptor = server_interceptor.OpenCensusServerInterceptor()
-   
+      
     try:
       if "DISABLE_DEBUGGER" in os.environ:
         raise KeyError()
       else:
         logger.info("Debugger enabled.")
-        try:
-          googleclouddebugger.enable(
-              module='recommendationserver',
-              version='1.0.0'
-          )
-        except (Exception, DefaultCredentialsError):
-            logger.error("Could not enable debugger")
-            logger.error(traceback.print_exc())
-            pass
     except (Exception, DefaultCredentialsError):
         logger.info("Debugger disabled.")
 
@@ -146,7 +141,7 @@ if __name__ == "__main__":
 
     # create gRPC server
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
-                      interceptors=(tracer_interceptor,))
+                      )
 
     # add class to gRPC server
     service = RecommendationService()
