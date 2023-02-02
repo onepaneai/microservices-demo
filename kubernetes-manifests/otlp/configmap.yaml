@@ -15,7 +15,6 @@ data:
     exporters:
       azuremonitor:
         instrumentation_key: b6a44f93-ffc9-442d-abda-0d2967019fb7
-        endpoint: https://eastus2-3.in.applicationinsights.azure.com/
     service:
       pipelines:
         traces:
