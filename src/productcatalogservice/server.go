@@ -48,8 +48,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 var (
@@ -122,12 +120,6 @@ func run(port string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	app, _ := newrelic.NewApplication(
-		newrelic.ConfigAppName("productcatalog-prod"),
-		newrelic.ConfigLicense("bc78b543a28d34f6fdbbd5790c73328d3b80NRAL"),
-		newrelic.ConfigAppLogForwardingEnabled(true),
-	)
 
 	var srv *grpc.Server
 
