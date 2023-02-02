@@ -25,6 +25,7 @@ import (
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/stackdriver"
 	"github.com/gorilla/mux"
+	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"go.opencensus.io/plugin/ocgrpc"
@@ -33,7 +34,6 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc"
-	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 const (
@@ -131,22 +131,21 @@ func main() {
 	mustConnGRPC(ctx, &svc.checkoutSvcConn, svc.checkoutSvcAddr)
 	mustConnGRPC(ctx, &svc.adSvcConn, svc.adSvcAddr)
 
-
 	app, errr := newrelic.NewApplication(
-		newrelic.ConfigAppName("frontend"),
+		newrelic.ConfigAppName("frontend-prod"),
 		newrelic.ConfigLicense("bc78b543a28d34f6fdbbd5790c73328d3b80NRAL"),
 		newrelic.ConfigAppLogForwardingEnabled(true),
 	)
-	
+
 	r := mux.NewRouter()
-	r.HandleFunc(newrelic.WrapHandleFunc(app,"/", svc.homeHandler)).Methods(http.MethodGet, http.MethodHead)
-	r.HandleFunc(newrelic.WrapHandleFunc(app,"/product/{id}", svc.productHandler)).Methods(http.MethodGet, http.MethodHead)
-	r.HandleFunc(newrelic.WrapHandleFunc(app,"/cart", svc.viewCartHandler)).Methods(http.MethodGet, http.MethodHead)
-	r.HandleFunc(newrelic.WrapHandleFunc(app,"/cart", svc.addToCartHandler)).Methods(http.MethodPost)
-	r.HandleFunc(newrelic.WrapHandleFunc(app,"/cart/empty", svc.emptyCartHandler)).Methods(http.MethodPost)
-	r.HandleFunc(newrelic.WrapHandleFunc(app,"/setCurrency", svc.setCurrencyHandler)).Methods(http.MethodPost)
-	r.HandleFunc(newrelic.WrapHandleFunc(app,"/logout", svc.logoutHandler)).Methods(http.MethodGet)
-	r.HandleFunc(newrelic.WrapHandleFunc(app,"/cart/checkout", svc.placeOrderHandler)).Methods(http.MethodPost)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/", svc.homeHandler)).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/product/{id}", svc.productHandler)).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/cart", svc.viewCartHandler)).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/cart", svc.addToCartHandler)).Methods(http.MethodPost)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/cart/empty", svc.emptyCartHandler)).Methods(http.MethodPost)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/setCurrency", svc.setCurrencyHandler)).Methods(http.MethodPost)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/logout", svc.logoutHandler)).Methods(http.MethodGet)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/cart/checkout", svc.placeOrderHandler)).Methods(http.MethodPost)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 	r.HandleFunc("/robots.txt", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprint(w, "User-agent: *\nDisallow: /") })
 	r.HandleFunc("/_healthz", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprint(w, "ok") })
