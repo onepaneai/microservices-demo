@@ -25,6 +25,9 @@ import (
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/stackdriver"
 	"github.com/google/uuid"
+	"github.com/newrelic/go-agent/v3/integrations/nrgrpc"
+	"github.com/newrelic/go-agent/v3/newrelic"
+
 	"github.com/sirupsen/logrus"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
@@ -102,14 +105,26 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	app, _ := newrelic.NewApplication(
+		newrelic.ConfigAppName("checkout-prod"),
+		newrelic.ConfigLicense("bc78b543a28d34f6fdbbd5790c73328d3b80NRAL"),
+		newrelic.ConfigAppLogForwardingEnabled(true),
+	)
 
 	var srv *grpc.Server
 	if os.Getenv("DISABLE_STATS") == "" {
 		log.Info("Stats enabled.")
-		srv = grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}))
+		srv = grpc.NewServer(
+			grpc.UnaryInterceptor(nrgrpc.UnaryServerInterceptor(app)),
+			grpc.StreamInterceptor(nrgrpc.StreamServerInterceptor(app)),
+			grpc.StatsHandler(&ocgrpc.ServerHandler{}),
+		)
 	} else {
 		log.Info("Stats disabled.")
-		srv = grpc.NewServer()
+		srv = grpc.NewServer(
+			grpc.UnaryInterceptor(nrgrpc.UnaryServerInterceptor(app)),
+			grpc.StreamInterceptor(nrgrpc.StreamServerInterceptor(app)),
+		)
 	}
 	pb.RegisterCheckoutServiceServer(srv, svc)
 	healthpb.RegisterHealthServer(srv, svc)
