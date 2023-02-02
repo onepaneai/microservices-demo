@@ -200,7 +200,7 @@ if __name__ == '__main__':
       raise KeyError()
     else:
       logger.info("Tracing enabled.")
-      exporter = AzureMonitorTraceExporter(connection_string="InstrumentationKey=b6a44f93-ffc9-442d-abda-0d2967019fb7;IngestionEndpoint=https://eastus2-3.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus2.livediagnostics.monitor.azure.com/")
+      exporter = AzureMonitorTraceExporter(connection_string=os.environ.get('APPINSIGHT_CONNECTION_STRING', ''))
 
       resource = Resource(attributes={
           "service.name": "emailservice"
