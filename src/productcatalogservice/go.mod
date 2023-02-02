@@ -25,6 +25,9 @@ require (
 	github.com/google/pprof v0.0.0-20220412212628-83db2b799d1f // indirect
 	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/newrelic/go-agent v3.19.2+incompatible // indirect
+	github.com/newrelic/go-agent/v3 v3.18.2 // indirect
+	github.com/newrelic/go-agent/v3/integrations/nrgrpc v1.3.2 // indirect
 	github.com/prometheus/prometheus v2.5.0+incompatible // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
