@@ -31,7 +31,6 @@ import (
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/productcatalogservice/genproto"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
-
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -43,8 +42,9 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/sirupsen/logrus"
+
 	//  "go.opencensus.io/exporter/jaeger"
-	
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -102,10 +102,8 @@ func main() {
 		log.Info("Tracing disabled.")
 	}
 
-	
 	flag.Parse()
 
-	
 	extraLatency = time.Duration(0)
 
 	sigs := make(chan os.Signal, 1)
@@ -137,8 +135,9 @@ func run(port string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	var srv *grpc.Server
-	
+
 	srv = grpc.NewServer()
 
 	svc := &productCatalog{}
@@ -148,8 +147,6 @@ func run(port string) string {
 	go srv.Serve(l)
 	return l.Addr().String()
 }
-
-
 
 func initTracing() {
 	svcAddr := os.Getenv("OTLP_SERVICE_ADDR")
@@ -203,8 +200,6 @@ func initTracing() {
 	log.Info("otlp initialization completed.")
 
 }
-
-
 
 type productCatalog struct{}
 
