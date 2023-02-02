@@ -20,9 +20,8 @@ import demo_pb2
 import demo_pb2_grpc
 
 from opencensus.trace.tracer import Tracer
-from opencensus.trace.exporters import stackdriver_exporter
-from opencensus.trace.ext.grpc import client_interceptor
 
+import os
 from opentelemetry import trace
 from opentelemetry.instrumentation.grpc import GrpcInstrumentorClient
 from opentelemetry.sdk.trace import TracerProvider
@@ -46,7 +45,7 @@ if __name__ == "__main__":
     try:
   
   
-        exporter = AzureMonitorTraceExporter(connection_string="InstrumentationKey=b6a44f93-ffc9-442d-abda-0d2967019fb7;IngestionEndpoint=https://eastus2-3.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus2.livediagnostics.monitor.azure.com/")
+        exporter = AzureMonitorTraceExporter(connection_string=os.environ.get('APPINSIGHT_CONNECTION_STRING', ''))
         resource = Resource(attributes={
             "service.name": "recommendationservice"
         })
