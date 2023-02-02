@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/newrelic/go-agent/v3/newrelic"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -100,11 +99,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	app, _ := newrelic.NewApplication(
-		newrelic.ConfigAppName("checkout-prod"),
-		newrelic.ConfigLicense("bc78b543a28d34f6fdbbd5790c73328d3b80NRAL"),
-		newrelic.ConfigAppLogForwardingEnabled(true),
-	)
 
 	var srv *grpc.Server
 
