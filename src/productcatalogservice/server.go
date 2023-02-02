@@ -138,7 +138,10 @@ func run(port string) string {
 
 	var srv *grpc.Server
 
-	srv = grpc.NewServer()
+	srv = grpc.NewServer(
+		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
+		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+	)
 
 	svc := &productCatalog{}
 
