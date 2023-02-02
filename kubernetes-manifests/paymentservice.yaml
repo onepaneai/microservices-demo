@@ -53,6 +53,8 @@ spec:
           value: "1"
         - name: DISABLE_DEBUGGER
           value: "1"
+        - name: APPLICATIONINSIGHTS_CONNECTION_STRING=
+          value : "InstrumentationKey=b6a44f93-ffc9-442d-abda-0d2967019fb7;IngestionEndpoint=https://eastus2-3.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus2.livediagnostics.monitor.azure.com/"
         readinessProbe:
           exec:
             command: ["/bin/grpc_health_probe", "-addr=:50051"]

@@ -22,20 +22,20 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/sdk/resource"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"google.golang.org/grpc/credentials/insecure"
-	"go.opentelemetry.io/otel/propagation"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/genproto"
 	money "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/money"
@@ -101,7 +101,7 @@ func main() {
 	}
 
 	var srv *grpc.Server
-	
+
 	srv = grpc.NewServer()
 
 	pb.RegisterCheckoutServiceServer(srv, svc)
@@ -116,7 +116,7 @@ func initTracing() {
 	if svcAddr == "" {
 		log.Info("jaeger initialization disabled.")
 		return
-	}else{
+	} else {
 		ctx := context.Background()
 		res, err := resource.New(ctx,
 			resource.WithAttributes(
@@ -158,7 +158,6 @@ func initTracing() {
 		// set global propagator to tracecontext (the default is no-op).
 		otel.SetTextMapPropagator(propagation.TraceContext{})
 
-
 	}
 
 	// Register the Jaeger exporter to be able to retrieve
@@ -176,7 +175,6 @@ func initTracing() {
 	log.Info("otlp initialization completed.")
 
 }
-
 
 func mustMapEnv(target *string, envKey string) {
 	v := os.Getenv(envKey)
@@ -300,7 +298,7 @@ func (cs *checkoutService) quoteShipping(ctx context.Context, address *pb.Addres
 
 func (cs *checkoutService) getUserCart(ctx context.Context, userID string) ([]*pb.CartItem, error) {
 	conn, err := grpc.DialContext(ctx, cs.cartSvcAddr, grpc.WithInsecure(),
-	grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	)
 	if err != nil {
@@ -317,7 +315,7 @@ func (cs *checkoutService) getUserCart(ctx context.Context, userID string) ([]*p
 
 func (cs *checkoutService) emptyUserCart(ctx context.Context, userID string) error {
 	conn, err := grpc.DialContext(ctx, cs.cartSvcAddr, grpc.WithInsecure(),
-	grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	)
 	if err != nil {
@@ -334,8 +332,8 @@ func (cs *checkoutService) emptyUserCart(ctx context.Context, userID string) err
 func (cs *checkoutService) prepOrderItems(ctx context.Context, items []*pb.CartItem, userCurrency string) ([]*pb.OrderItem, error) {
 	out := make([]*pb.OrderItem, len(items))
 
-	conn, err := grpc.DialContext(ctx, cs.productCatalogSvcAddr, grpc.WithInsecure(), 
-	grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+	conn, err := grpc.DialContext(ctx, cs.productCatalogSvcAddr, grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	)
 	if err != nil {
@@ -361,8 +359,8 @@ func (cs *checkoutService) prepOrderItems(ctx context.Context, items []*pb.CartI
 }
 
 func (cs *checkoutService) convertCurrency(ctx context.Context, from *pb.Money, toCurrency string) (*pb.Money, error) {
-	conn, err := grpc.DialContext(ctx, cs.currencySvcAddr, grpc.WithInsecure(), 
-	grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+	conn, err := grpc.DialContext(ctx, cs.currencySvcAddr, grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	)
 	if err != nil {
@@ -379,8 +377,8 @@ func (cs *checkoutService) convertCurrency(ctx context.Context, from *pb.Money, 
 }
 
 func (cs *checkoutService) chargeCard(ctx context.Context, amount *pb.Money, paymentInfo *pb.CreditCardInfo) (string, error) {
-	conn, err := grpc.DialContext(ctx, cs.paymentSvcAddr, grpc.WithInsecure(), 
-	grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+	conn, err := grpc.DialContext(ctx, cs.paymentSvcAddr, grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	)
 	if err != nil {
@@ -398,8 +396,8 @@ func (cs *checkoutService) chargeCard(ctx context.Context, amount *pb.Money, pay
 }
 
 func (cs *checkoutService) sendOrderConfirmation(ctx context.Context, email string, order *pb.OrderResult) error {
-	conn, err := grpc.DialContext(ctx, cs.emailSvcAddr, grpc.WithInsecure(), 
-	grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+	conn, err := grpc.DialContext(ctx, cs.emailSvcAddr, grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	)
 	if err != nil {
@@ -413,8 +411,8 @@ func (cs *checkoutService) sendOrderConfirmation(ctx context.Context, email stri
 }
 
 func (cs *checkoutService) shipOrder(ctx context.Context, address *pb.Address, items []*pb.CartItem) (string, error) {
-	conn, err := grpc.DialContext(ctx, cs.shippingSvcAddr, grpc.WithInsecure(), 
-	grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+	conn, err := grpc.DialContext(ctx, cs.shippingSvcAddr, grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	)
 	if err != nil {

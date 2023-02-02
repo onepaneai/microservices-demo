@@ -23,20 +23,19 @@ import (
 
 	"github.com/gorilla/mux"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	
+
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
-	"google.golang.org/grpc/credentials/insecure"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"google.golang.org/grpc"
 )
@@ -60,7 +59,6 @@ var (
 		"GBP": true,
 		"TRY": true}
 )
-
 
 const (
 	instrumentationName    = "github.com/GoogleCloudPlatform/microservices-demo/src/frontend"
@@ -116,12 +114,11 @@ func main() {
 
 	if os.Getenv("DISABLE_TRACING") == "" {
 		log.Info("Tracing enabled.")
-		go initTracing(log,ctx)
+		go initTracing(log, ctx)
 	} else {
 		log.Info("Tracing disabled.")
 	}
 
-	
 	srvPort := port
 	if os.Getenv("PORT") != "" {
 		srvPort = os.Getenv("PORT")
@@ -144,9 +141,6 @@ func main() {
 	mustConnGRPC(ctx, &svc.checkoutSvcConn, svc.checkoutSvcAddr)
 	mustConnGRPC(ctx, &svc.adSvcConn, svc.adSvcAddr)
 
-
-	
-	
 	r := mux.NewRouter()
 	r.Use(otelmux.Middleware("frontend-server"))
 	r.HandleFunc("/", svc.homeHandler).Methods(http.MethodGet, http.MethodHead)
@@ -161,11 +155,10 @@ func main() {
 	r.HandleFunc("/robots.txt", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprint(w, "User-agent: *\nDisallow: /") })
 	r.HandleFunc("/_healthz", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprint(w, "ok") })
 
-	
 	var handler http.Handler = r
 	handler = &logHandler{log: log, next: handler} // add logging
 	handler = ensureSessionID(handler)             // add session ID
-	
+
 	log.Infof("starting server on " + addr + ":" + srvPort)
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
 }
@@ -176,7 +169,7 @@ func initOTLPTracing(log logrus.FieldLogger, ctx context.Context) {
 	if svcAddr == "" {
 		log.Info("jaeger initialization disabled.")
 		return
-	}else{
+	} else {
 		res, err := resource.New(ctx,
 			resource.WithAttributes(
 				// the service name used to display traces in backends
@@ -215,7 +208,6 @@ func initOTLPTracing(log logrus.FieldLogger, ctx context.Context) {
 		// set global propagator to tracecontext (the default is no-op).
 		otel.SetTextMapPropagator(propagation.TraceContext{})
 
-
 	}
 
 	// Register the Jaeger exporter to be able to retrieve
@@ -233,9 +225,6 @@ func initOTLPTracing(log logrus.FieldLogger, ctx context.Context) {
 	log.Info("otlp initialization completed.")
 }
 
-
-
-
 func initTracing(log logrus.FieldLogger, ctx context.Context) {
 	// This is a demo app with low QPS. trace.AlwaysSample() is used here
 	// to make sure traces are available for observation and analysis.
@@ -243,7 +232,7 @@ func initTracing(log logrus.FieldLogger, ctx context.Context) {
 	// trace.ProbabilitySampler set at the desired probability.
 	// trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
-	initOTLPTracing(log,ctx)
+	initOTLPTracing(log, ctx)
 
 }
 
