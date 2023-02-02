@@ -61,6 +61,21 @@ var (
 	reloadCatalog bool
 )
 
+
+const (
+	instrumentationName    = "github.com/GoogleCloudPlatform/microservices-demo/src/productcatalogservice"
+	instrumentationVersion = "v1.0.0"
+)
+
+var (
+	tracer = otel.Tracer(
+		instrumentationName,
+		trace.WithInstrumentationVersion(instrumentationVersion),
+		trace.WithSchemaURL(semconv.SchemaURL),
+	)
+)
+
+
 func init() {
 	log = logrus.New()
 	log.Formatter = &logrus.JSONFormatter{
