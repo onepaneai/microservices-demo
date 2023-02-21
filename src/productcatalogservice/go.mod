@@ -21,6 +21,8 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.0 // indirect
+	github.com/newrelic/go-agent/v3 v3.20.3 // indirect
+	github.com/newrelic/go-agent/v3/integrations/nrgrpc v1.3.2 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.12.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.12.0 // indirect
 	go.opentelemetry.io/otel/metric v0.35.0 // indirect

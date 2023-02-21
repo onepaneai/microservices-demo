@@ -29,9 +29,10 @@ import (
 	"time"
 
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/productcatalogservice/genproto"
+	"github.com/newrelic/go-agent/v3/integrations/nrgrpc"
+	"github.com/newrelic/go-agent/v3/newrelic"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
@@ -61,20 +62,18 @@ var (
 	reloadCatalog bool
 )
 
+// const (
+// 	instrumentationName    = "github.com/GoogleCloudPlatform/microservices-demo/src/productcatalogservice"
+// 	instrumentationVersion = "v1.0.0"
+// )
 
-const (
-	instrumentationName    = "github.com/GoogleCloudPlatform/microservices-demo/src/productcatalogservice"
-	instrumentationVersion = "v1.0.0"
-)
-
-var (
-	tracer = otel.Tracer(
-		instrumentationName,
-		trace.WithInstrumentationVersion(instrumentationVersion),
-		trace.WithSchemaURL(semconv.SchemaURL),
-	)
-)
-
+// var (
+// 	tracer = otel.Tracer(
+// 		instrumentationName,
+// 		trace.WithInstrumentationVersion(instrumentationVersion),
+// 		trace.WithSchemaURL(semconv.SchemaURL),
+// 	)
+// )
 
 func init() {
 	log = logrus.New()
@@ -95,12 +94,13 @@ func init() {
 }
 
 func main() {
-	if os.Getenv("DISABLE_TRACING") == "" {
-		log.Info("Tracing enabled.")
-		go initTracing()
-	} else {
-		log.Info("Tracing disabled.")
-	}
+	// ctx := context.Background()
+	// if os.Getenv("DISABLE_TRACING") == "" {
+	// 	log.Info("Tracing enabled.")
+	// 	go initTracing(ctx)
+	// } else {
+	// 	log.Info("Tracing disabled.")
+	// }
 
 	flag.Parse()
 
@@ -138,9 +138,21 @@ func run(port string) string {
 
 	var srv *grpc.Server
 
+	app, nrerr := newrelic.NewApplication(
+		newrelic.ConfigAppName("productcatalog-demo"),
+		newrelic.ConfigLicense("bc78b543a28d34f6fdbbd5790c73328d3b80NRAL"),
+		newrelic.ConfigAppLogForwardingEnabled(true),
+	)
+
+	if nrerr != nil {
+		log.Fatal(nrerr)
+	} else {
+		log.Info("newrelic integrated")
+	}
+
 	srv = grpc.NewServer(
-		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
-		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+		grpc.UnaryInterceptor(nrgrpc.UnaryServerInterceptor(app)),
+		grpc.StreamInterceptor(nrgrpc.StreamServerInterceptor(app)),
 	)
 
 	svc := &productCatalog{}
@@ -151,13 +163,14 @@ func run(port string) string {
 	return l.Addr().String()
 }
 
-func initTracing() {
+func initTracing(ctx context.Context) {
 	svcAddr := os.Getenv("OTLP_SERVICE_ADDR")
+
 	if svcAddr == "" {
 		log.Info("jaeger initialization disabled.")
 		return
 	} else {
-		ctx := context.Background()
+
 		res, err := resource.New(ctx,
 			resource.WithAttributes(
 				// the service name used to display traces in backends
@@ -173,9 +186,9 @@ func initTracing() {
 		conn, err := grpc.DialContext(ctx, svcAddr,
 			// Note the use of insecure transport here. TLS is recommended in production.
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithBlock(),
-			grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-			grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+			// grpc.WithBlock(),
+			// grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+			// grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 		)
 		if err != nil {
 			log.Fatal(err)
