@@ -104,26 +104,6 @@ if __name__ == "__main__":
     logger.info("initializing recommendationservice")
 
     try:
-      if "DISABLE_TRACING" in os.environ:
-        raise KeyError()
-      else:
-        logger.info("Tracing enabled.")
-        exporter = AzureMonitorTraceExporter(connection_string=os.environ.get('APPINSIGHT_CONNECTION_STRING', ''))
-        resource = Resource(attributes={
-          "service.name": "recommendationservice"
-        })
-        sampler = ApplicationInsightsSampler(0.1)
-        trace.set_tracer_provider(TracerProvider(resource=resource, sampler=sampler))
-        trace.get_tracer_provider().add_span_processor(
-            SimpleSpanProcessor(exporter)
-        )
-
-        grpc_server_instrumentor = GrpcInstrumentorServer()
-        grpc_server_instrumentor.instrument()
-    except Exception as e:
-        logger.warn(f"Exception on Cloud Trace setup: {traceback.format_exc()}, tracing disabled.") 
-      
-    try:
       if "DISABLE_DEBUGGER" in os.environ:
         raise KeyError()
       else:

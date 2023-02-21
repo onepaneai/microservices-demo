@@ -29,7 +29,6 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.4.12 && \
 # get packages
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-
 FROM base as final
 # Enable unbuffered logging
 ENV PYTHONUNBUFFERED=1
@@ -43,12 +42,12 @@ COPY --from=builder /bin/grpc_health_probe /bin/grpc_health_probe
 
 # Add the application
 COPY . .
-# RUN pip install newrelic
+RUN pip install newrelic
 
 # set listen port
 ENV PORT "8080"
 EXPOSE 8080
-# ENV NEW_RELIC_CONFIG_FILE=newrelic.ini
-# ENTRYPOINT ["newrelic-admin", "run-program", "python", "recommendation_server.py"]
+ENV NEW_RELIC_CONFIG_FILE=newrelic.ini
+ENTRYPOINT ["newrelic-admin", "run-program", "python", "recommendation_server.py"]
 
-ENTRYPOINT ["python", "recommendation_server.py"]
+# ENTRYPOINT ["python", "recommendation_server.py"]
