@@ -22,6 +22,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/newrelic/go-agent/v3/integrations/nrgrpc"
+	"github.com/newrelic/go-agent/v3/newrelic"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -29,13 +31,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/resource"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
-	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/genproto"
 	money "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/money"
@@ -73,9 +68,10 @@ type checkoutService struct {
 }
 
 func main() {
+	//ctx := context.Background()
 	if os.Getenv("DISABLE_TRACING") == "" {
 		log.Info("Tracing enabled.")
-		go initTracing()
+		//go initTracing(ctx)
 	} else {
 		log.Info("Tracing disabled.")
 	}
@@ -100,11 +96,23 @@ func main() {
 		log.Fatal(err)
 	}
 
+	app, nrerr := newrelic.NewApplication(
+		newrelic.ConfigAppName("checkout-demo"),
+		newrelic.ConfigLicense("bc78b543a28d34f6fdbbd5790c73328d3b80NRAL"),
+		newrelic.ConfigAppLogForwardingEnabled(true),
+	)
+
+	if nrerr != nil {
+		log.Fatal(nrerr)
+	} else {
+		log.Info("newrelic integration")
+	}
+
 	var srv *grpc.Server
 
 	srv = grpc.NewServer(
-		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
-		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+		grpc.UnaryInterceptor(nrgrpc.UnaryServerInterceptor(app)),
+		grpc.StreamInterceptor(nrgrpc.StreamServerInterceptor(app)),
 	)
 
 	pb.RegisterCheckoutServiceServer(srv, svc)
@@ -114,54 +122,54 @@ func main() {
 	log.Fatal(err)
 }
 
-func initTracing() {
-	svcAddr := os.Getenv("OTLP_SERVICE_ADDR")
-	if svcAddr == "" {
-		log.Info("jaeger initialization disabled.")
-		return
-	} else {
-		ctx := context.Background()
-		res, err := resource.New(ctx,
-			resource.WithAttributes(
-				// the service name used to display traces in backends
-				semconv.ServiceNameKey.String("checkoutservice"),
-			),
-		)
-		if err != nil {
-			log.Fatalf("failed to create resource: %w", err)
-		}
+func initTracing(ctx context.Context) {
+	// svcAddr := os.Getenv("OTLP_SERVICE_ADDR")
+	// if svcAddr == "" {
+	// 	log.Info("jaeger initialization disabled.")
+	// 	return
+	// } else {
 
-		ctx, cancel := context.WithTimeout(ctx, time.Second)
-		defer cancel()
-		conn, err := grpc.DialContext(ctx, svcAddr,
-			// Note the use of insecure transport here. TLS is recommended in production.
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithBlock(),
-			grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-			grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-		)
-		if err != nil {
-			log.Fatal(err)
-		}
+	// 	res, err := resource.New(ctx,
+	// 		resource.WithAttributes(
+	// 			// the service name used to display traces in backends
+	// 			semconv.ServiceNameKey.String("checkoutservice"),
+	// 		),
+	// 	)
+	// 	if err != nil {
+	// 		log.Fatalf("failed to create resource: %w", err)
+	// 	}
 
-		// Set up a trace exporter
-		traceExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
-		if err != nil {
-			log.Fatal(err)
-		}
-		bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
+	// 	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	// 	defer cancel()
+	// 	conn, err := grpc.DialContext(ctx, svcAddr,
+	// 		// Note the use of insecure transport here. TLS is recommended in production.
+	// 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	// 		// grpc.WithBlock(),
+	// 		// grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+	// 		// grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+	// 	)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
 
-		tracerProvider := sdktrace.NewTracerProvider(
-			sdktrace.WithSampler(sdktrace.AlwaysSample()),
-			sdktrace.WithResource(res),
-			sdktrace.WithSpanProcessor(bsp),
-		)
-		otel.SetTracerProvider(tracerProvider)
+	// 	// Set up a trace exporter
+	// 	traceExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
 
-		// set global propagator to tracecontext (the default is no-op).
-		otel.SetTextMapPropagator(propagation.TraceContext{})
+	// 	tracerProvider := sdktrace.NewTracerProvider(
+	// 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+	// 		sdktrace.WithResource(res),
+	// 		sdktrace.WithSpanProcessor(bsp),
+	// 	)
+	// 	otel.SetTracerProvider(tracerProvider)
 
-	}
+	// 	// set global propagator to tracecontext (the default is no-op).
+	// 	otel.SetTextMapPropagator(propagation.TraceContext{})
+
+	// }
 
 	// Register the Jaeger exporter to be able to retrieve
 	// the collected spans.
@@ -175,7 +183,7 @@ func initTracing() {
 	// 	log.Fatal(err)
 	// }
 	// trace.RegisterExporter(exporter)
-	log.Info("otlp initialization completed.")
+	//log.Info("otlp initialization completed.")
 
 }
 
