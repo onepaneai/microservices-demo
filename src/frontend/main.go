@@ -26,7 +26,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -34,9 +33,9 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
-	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/newrelic/go-agent/v3/newrelic"
 	"google.golang.org/grpc"
 )
 
@@ -58,19 +57,6 @@ var (
 		"JPY": true,
 		"GBP": true,
 		"TRY": true}
-)
-
-const (
-	instrumentationName    = "github.com/GoogleCloudPlatform/microservices-demo/src/frontend"
-	instrumentationVersion = "v1.0.0"
-)
-
-var (
-	tracer = otel.Tracer(
-		instrumentationName,
-		trace.WithInstrumentationVersion(instrumentationVersion),
-		trace.WithSchemaURL(semconv.SchemaURL),
-	)
 )
 
 type ctxKeySessionID struct{}
@@ -112,12 +98,12 @@ func main() {
 	}
 	log.Out = os.Stdout
 
-	if os.Getenv("DISABLE_TRACING") == "" {
-		log.Info("Tracing enabled.")
-		go initTracing(log, ctx)
-	} else {
-		log.Info("Tracing disabled.")
-	}
+	// if os.Getenv("DISABLE_TRACING") == "" {
+	// 	log.Info("Tracing enabled.")
+	// 	go initTracing(log, ctx)
+	// } else {
+	// 	log.Info("Tracing disabled.")
+	// }
 
 	srvPort := port
 	if os.Getenv("PORT") != "" {
@@ -141,16 +127,26 @@ func main() {
 	mustConnGRPC(ctx, &svc.checkoutSvcConn, svc.checkoutSvcAddr)
 	mustConnGRPC(ctx, &svc.adSvcConn, svc.adSvcAddr)
 
+	app, nrerr := newrelic.NewApplication(
+		newrelic.ConfigAppName("frontend-demo"),
+		newrelic.ConfigLicense("bc78b543a28d34f6fdbbd5790c73328d3b80NRAL"),
+		newrelic.ConfigAppLogForwardingEnabled(true),
+	)
+
+	if nrerr != nil {
+		log.Fatal(nrerr)
+	} else {
+		log.Info("newrelic integrated")
+	}
 	r := mux.NewRouter()
-	r.Use(otelmux.Middleware("frontend-server"))
-	r.HandleFunc("/", svc.homeHandler).Methods(http.MethodGet, http.MethodHead)
-	r.HandleFunc("/product/{id}", svc.productHandler).Methods(http.MethodGet, http.MethodHead)
-	r.HandleFunc("/cart", svc.viewCartHandler).Methods(http.MethodGet, http.MethodHead)
-	r.HandleFunc("/cart", svc.addToCartHandler).Methods(http.MethodPost)
-	r.HandleFunc("/cart/empty", svc.emptyCartHandler).Methods(http.MethodPost)
-	r.HandleFunc("/setCurrency", svc.setCurrencyHandler).Methods(http.MethodPost)
-	r.HandleFunc("/logout", svc.logoutHandler).Methods(http.MethodGet)
-	r.HandleFunc("/cart/checkout", svc.placeOrderHandler).Methods(http.MethodPost)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/", svc.homeHandler)).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/product/{id}", svc.productHandler)).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/cart", svc.viewCartHandler)).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/cart", svc.addToCartHandler)).Methods(http.MethodPost)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/cart/empty", svc.emptyCartHandler)).Methods(http.MethodPost)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/setCurrency", svc.setCurrencyHandler)).Methods(http.MethodPost)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/logout", svc.logoutHandler)).Methods(http.MethodGet)
+	r.HandleFunc(newrelic.WrapHandleFunc(app, "/cart/checkout", svc.placeOrderHandler)).Methods(http.MethodPost)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 	r.HandleFunc("/robots.txt", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprint(w, "User-agent: *\nDisallow: /") })
 	r.HandleFunc("/_healthz", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprint(w, "ok") })
@@ -232,7 +228,7 @@ func initTracing(log logrus.FieldLogger, ctx context.Context) {
 	// trace.ProbabilitySampler set at the desired probability.
 	// trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
-	initOTLPTracing(log, ctx)
+	//initOTLPTracing(log, ctx)
 
 }
 
