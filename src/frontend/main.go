@@ -128,7 +128,7 @@ func main() {
 	mustConnGRPC(ctx, &svc.adSvcConn, svc.adSvcAddr)
 
 	app, nrerr := newrelic.NewApplication(
-		newrelic.ConfigAppName("frontend-demo"),
+		newrelic.ConfigAppName("frontend"),
 		newrelic.ConfigLicense("bc78b543a28d34f6fdbbd5790c73328d3b80NRAL"),
 		newrelic.ConfigAppLogForwardingEnabled(true),
 	)

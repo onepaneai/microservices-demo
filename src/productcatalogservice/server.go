@@ -139,7 +139,7 @@ func run(port string) string {
 	var srv *grpc.Server
 
 	app, nrerr := newrelic.NewApplication(
-		newrelic.ConfigAppName("productcatalog-demo"),
+		newrelic.ConfigAppName("productcatalog"),
 		newrelic.ConfigLicense("bc78b543a28d34f6fdbbd5790c73328d3b80NRAL"),
 		newrelic.ConfigAppLogForwardingEnabled(true),
 	)
